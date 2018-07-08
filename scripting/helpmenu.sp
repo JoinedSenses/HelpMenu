@@ -92,6 +92,7 @@ public void OnClientPostAdminCheck(int client) {
 
 public Action Timer_WelcomeMessage(Handle timer, any client) {
 	if (g_cvarWelcome.BoolValue && Client_IsValidHuman(client, true, false, true)) {
+		PrintToChat(client, "\x05[SM] \x01For help, type \x04!helpmenu\x01 in chat");
 	}
 }
 
@@ -132,7 +133,7 @@ public SMCResult Config_NewSection(SMCParser parser, const char[] section, bool 
 }
 
 public SMCResult Config_KeyValue(SMCParser parser, const char[] key, const char[] value, bool key_quotes, bool value_quotes) {
-	int msize = GetArraySize(g_helpMenus);
+	int msize = g_helpMenus.Length;
 	int hmenu[HelpMenu];
 	GetArrayArray(g_helpMenus, msize-1, hmenu[0]);
 	switch (g_configLevel) {
@@ -162,7 +163,7 @@ public SMCResult Config_EndSection(SMCParser parser) {
 	g_configLevel--;
 	if (g_configLevel == 1) {
 		int hmenu[HelpMenu];
-		int msize = GetArraySize(g_helpMenus);
+		int msize = g_helpMenus.Length;
 		GetArrayArray(g_helpMenus, msize-1, hmenu[0]);
 		hmenu[items].Reset();
 	}
@@ -198,7 +199,7 @@ void Help_ShowMainMenu(int client) {
 	Menu menu = new Menu(Help_MainMenuHandler);
 	menu.SetTitle("Help Menu");
 
-	int msize = GetArraySize(g_helpMenus);
+	int msize = g_helpMenus.Length;
 	int hmenu[HelpMenu];
 	char menuid[10];
 
@@ -223,16 +224,16 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 	switch(action) {
 		case MenuAction_Select: {
 			char buf[64];
-			int msize = GetArraySize(g_helpMenus);
+			int msize = g_helpMenus.Length;
 			if (param2 == msize) { // Maps
 				Menu mapMenu = new Menu(Help_MenuHandler);
 				mapMenu.ExitBackButton = true;
 				ReadMapList(g_mapArray, g_mapSerial, "default");
-				Format(buf, sizeof(buf), "Current Rotation (%d maps)\n ", GetArraySize(g_helpMenus));
+				Format(buf, sizeof(buf), "Current Rotation (%d maps)\n ", g_helpMenus.Length);
 				mapMenu.SetTitle(buf);
 
 				if (g_mapArray != null) {
-					int mapct = GetArraySize(g_helpMenus);
+					int mapct = g_helpMenus.Length;
 					char mapname[64];
 					for (int i = 0; i < mapct; ++i) {
 						g_mapArray.GetString(i, mapname, sizeof(mapname));
