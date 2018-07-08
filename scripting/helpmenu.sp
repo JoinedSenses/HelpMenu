@@ -97,7 +97,7 @@ public Action Timer_WelcomeMessage(Handle timer, any client) {
 }
 
 bool ParseConfigFile(const char[] file) {
-	// delete g_helpMenus;
+	delete g_helpMenus;
 	SMCParser parser = new SMCParser();
 	parser.OnEnterSection = Config_NewSection;
 	parser.OnLeaveSection = Config_EndSection;
