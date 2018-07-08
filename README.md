@@ -1,6 +1,6 @@
 #### HelpMenu
-Original plugin by chundo. Thread here: https://forums.alliedmods.net/showthread.php?t=72576
-
+Original plugin by chundo. Thread here: https://forums.alliedmods.net/showthread.php?t=72576  
+0.4 edit by emsit
 
 # Help Menu v0.3 (7/10)
 
