@@ -34,7 +34,7 @@ sm_helpmenu_autoreload // Reload the config on map change
 sm_helpmenu_config_path // Change the file path of the config file
 
 ## Commands:
-
+sm_help // Show the help menu
 sm_helpmenu // Show the help menu.
 sm_commands // Shows the help menu
 sm_helpmenu_reload // Reloads help menu config
