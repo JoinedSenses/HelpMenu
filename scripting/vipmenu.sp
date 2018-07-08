@@ -47,7 +47,7 @@ public void OnPluginStart() {
 
 	RegConsoleCmd("sm_vip", Command_VipMenu, "Display the help menu.");
 	RegConsoleCmd("sm_vipmenu", Command_VipMenu, "Display the help menu.");
-	RegAdminCmd("sm_helpmenu_reload", Command_VipMenuReload, ADMFLAG_ROOT, "Reload the configuration file");
+	RegAdminCmd("sm_vipmenu_reload", Command_VipMenuReload, ADMFLAG_ROOT, "Reload the configuration file");
 
 	char hc[PLATFORM_MAX_PATH];
 	char buffer[PLATFORM_MAX_PATH];
