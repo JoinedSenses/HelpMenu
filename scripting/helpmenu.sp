@@ -256,7 +256,8 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 				char aname[64];
 
 				for (int i = 1; i < MaxClients; ++i) {
-					if (Client_IsValidHuman(i, true, false, true) && (GetUserFlagBits(i)) == ADMFLAG_ROOT){
+					// override helpmenu_admin to change who shows in menu
+					if (Client_IsValidHuman(i, true, false, true) && CheckCommandAccess(i, "helpmenu_admin", ADMFLAG_KICK)) {
 						GetClientName(i, aname, sizeof(aname));
 						adminMenu.AddItem(aname, aname, ITEMDRAW_DISABLED);
 					}
