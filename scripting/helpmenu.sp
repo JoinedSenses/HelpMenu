@@ -51,7 +51,7 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-	CreateConVar("sm_helpmenu_version", PLUGIN_VERSION, "Help menu version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY).SetString(PLUGIN_VERSION);
+	CreateConVar("sm_helpmenu_version", PLUGIN_VERSION, "Help menu version", FCVAR_SPONLY|FCVAR_DONTRECORD|FCVAR_NOTIFY).SetString(PLUGIN_VERSION);
 	g_cvarWelcome = CreateConVar("sm_helpmenu_welcome", "1", "Show welcome message to newly connected users.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarAdmins = CreateConVar("sm_helpmenu_admins", "1", "Show a list of online admins in the menu.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarRotation = CreateConVar("sm_helpmenu_rotation", "1", "Shows the map rotation in the menu.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -72,7 +72,8 @@ public void OnPluginStart() {
 	BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
 	ParseConfigFile(hc);
 
-	AutoExecConfig(false);
+	// /cfg/sourcemod/plugin.helpmenu.cfg
+	AutoExecConfig();
 }
 
 public void OnMapStart() {
