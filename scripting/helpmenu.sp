@@ -58,11 +58,11 @@ public void OnPluginStart() {
 	g_cvarReload = CreateConVar("sm_helpmenu_autoreload", "0", "Automatically reload the configuration file when changing the map.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarConfigPath = CreateConVar("sm_helpmenu_config_path", "configs/helpmenu.cfg", "Path to configuration file.");
 
-	RegConsoleCmd("sm_help", Command_HelpMenu, "Display the help menu.");
+	RegConsoleCmd("sm_helpmenu", Command_HelpMenu, "Display the help menu.");
 	RegConsoleCmd("sm_commands", Command_HelpMenu, "Display the help menu.");
 	RegAdminCmd("sm_helpmenu_reload", Command_HelpMenuReload, ADMFLAG_ROOT, "Reload the configuration file");
 
-	g_mapArray = new ArrayList(32);
+	g_mapArray = new ArrayList(ByteCountToCells(80));
 	g_helpMenus = new ArrayList(sizeof(HelpMenu));
 
 	char hc[PLATFORM_MAX_PATH];
@@ -95,7 +95,7 @@ public void OnClientPostAdminCheck(int client) {
 public Action Timer_WelcomeMessage(Handle timer, int userid) {
 	int client = GetClientOfUserId(userid);
 	if (g_cvarWelcome.BoolValue && client && IsClientInGame(client) && !IsFakeClient(client)) {
-		PrintToChat(client, "\x05[SM] \x01For help, type \x04!help\x01 in chat");
+		PrintToChat(client, "\x05[SM] \x01For help, type \x04!helpmenu\x01 in chat");
 	}
 }
 
@@ -441,9 +441,6 @@ stock bool CommandExist(char[] command, int commandLen) {
 
 	//add the prefix 'sm_' to the beginning of the command
 	Format(command, commandLen, "sm_%s", command);
-	if (CommandExists(command)) {
-		return true;
-	}
 
-	return false;
+	return CommandExists(command);
 }
