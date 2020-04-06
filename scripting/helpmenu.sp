@@ -87,7 +87,7 @@ public void OnMapStart() {
 	}
 }
 
-public void OnClientPostAdminCheck(int client) {
+public void OnClientPutInServer(int client) {
 	if (g_cvarWelcome.BoolValue) {
 		CreateTimer(15.0, Timer_WelcomeMessage, GetClientUserId(client));
 	}
@@ -95,7 +95,7 @@ public void OnClientPostAdminCheck(int client) {
 
 public Action Timer_WelcomeMessage(Handle timer, int userid) {
 	int client = GetClientOfUserId(userid);
-	if (g_cvarWelcome.BoolValue && client && IsClientInGame(client) && !IsFakeClient(client)) {
+	if (client && g_cvarWelcome.BoolValue && !IsFakeClient(client)) {
 		PrintToChat(client, "\x05[SM] \x01For help, type \x04!helpmenu\x01 in chat");
 	}
 }
