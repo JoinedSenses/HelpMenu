@@ -9,24 +9,24 @@
 #pragma semicolon 1
 #pragma newdecls required
 #include <sourcemod>
-#define PLUGIN_VERSION "0.5"
+#define PLUGIN_VERSION "0.6"
 
 enum HelpMenuType {
 	HelpMenuType_List,
 	HelpMenuType_Text
 }
 
-enum HelpMenu {
-	String:name[32],
-	String:title[128],
-	HelpMenuType:type,
-	DataPack:items,
-	itemct
+enum struct HelpMenu {
+	char name[32];
+	char title[128];
+	HelpMenuType type;
+	DataPack items;
+	int itemCount;
 }
 
 // CVars
 ConVar
-	g_cvarWelcome
+	  g_cvarWelcome
 	, g_cvarAdmins
 	, g_cvarRotation
 	, g_cvarReload
@@ -51,20 +51,22 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-	CreateConVar("sm_helpmenu_version", PLUGIN_VERSION, "Help menu version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	CreateConVar("sm_helpmenu_version", PLUGIN_VERSION, "Help menu version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY).SetString(PLUGIN_VERSION);
 	g_cvarWelcome = CreateConVar("sm_helpmenu_welcome", "1", "Show welcome message to newly connected users.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarAdmins = CreateConVar("sm_helpmenu_admins", "1", "Show a list of online admins in the menu.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarRotation = CreateConVar("sm_helpmenu_rotation", "1", "Shows the map rotation in the menu.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarReload = CreateConVar("sm_helpmenu_autoreload", "0", "Automatically reload the configuration file when changing the map.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cvarConfigPath = CreateConVar("sm_helpmenu_config_path", "configs/helpmenu.cfg", "Path to configuration file.");
 
-	RegConsoleCmd("sm_helpmenu", Command_HelpMenu, "Display the help menu.");
+	RegConsoleCmd("sm_help", Command_HelpMenu, "Display the help menu.");
 	RegConsoleCmd("sm_commands", Command_HelpMenu, "Display the help menu.");
 	RegAdminCmd("sm_helpmenu_reload", Command_HelpMenuReload, ADMFLAG_ROOT, "Reload the configuration file");
 
+	g_mapArray = new ArrayList(32);
+	g_helpMenus = new ArrayList(sizeof(HelpMenu));
+
 	char hc[PLATFORM_MAX_PATH];
 	char buffer[PLATFORM_MAX_PATH];
-	g_mapArray = new ArrayList(32);
 
 	g_cvarConfigPath.GetString(buffer, sizeof(buffer));
 	BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
@@ -86,18 +88,20 @@ public void OnMapStart() {
 
 public void OnClientPostAdminCheck(int client) {
 	if (g_cvarWelcome.BoolValue) {
-		CreateTimer(15.0, Timer_WelcomeMessage, client);
+		CreateTimer(15.0, Timer_WelcomeMessage, GetClientUserId(client));
 	}
 }
 
-public Action Timer_WelcomeMessage(Handle timer, any client) {
-	if (g_cvarWelcome.BoolValue && Client_IsValidHuman(client, true, false, true)) {
-		PrintToChat(client, "\x05[SM] \x01For help, type \x04!helpmenu\x01 in chat");
+public Action Timer_WelcomeMessage(Handle timer, int userid) {
+	int client = GetClientOfUserId(userid);
+	if (g_cvarWelcome.BoolValue && client && IsClientInGame(client) && !IsFakeClient(client)) {
+		PrintToChat(client, "\x05[SM] \x01For help, type \x04!help\x01 in chat");
 	}
 }
 
 bool ParseConfigFile(const char[] file) {
-	delete g_helpMenus;
+	g_helpMenus.Clear();
+
 	SMCParser parser = new SMCParser();
 	parser.OnEnterSection = Config_NewSection;
 	parser.OnLeaveSection = Config_EndSection;
@@ -117,16 +121,16 @@ bool ParseConfigFile(const char[] file) {
 }
 
 public SMCResult Config_NewSection(SMCParser parser, const char[] section, bool quotes) {
-	g_configLevel++;
+	++g_configLevel;
 	if (g_configLevel == 1) {
-		int hmenu[HelpMenu];
-		strcopy(hmenu[name], sizeof(hmenu[name]), section);
-		hmenu[items] = new DataPack();
-		hmenu[itemct] = 0;
+		HelpMenu hmenu;
+		strcopy(hmenu.name, sizeof(HelpMenu::name), section);
+		hmenu.items = new DataPack();
+		hmenu.itemCount = 0;
 		if (g_helpMenus == null) {
-			g_helpMenus = new ArrayList(sizeof(hmenu));
+			g_helpMenus = new ArrayList(sizeof(HelpMenu));
 		}
-		PushArrayArray(g_helpMenus, hmenu[0]);
+		g_helpMenus.PushArray(hmenu);
 	}
 
 	return SMCParse_Continue;
@@ -134,38 +138,40 @@ public SMCResult Config_NewSection(SMCParser parser, const char[] section, bool 
 
 public SMCResult Config_KeyValue(SMCParser parser, const char[] key, const char[] value, bool key_quotes, bool value_quotes) {
 	int msize = g_helpMenus.Length;
-	int hmenu[HelpMenu];
-	GetArrayArray(g_helpMenus, msize-1, hmenu[0]);
+	HelpMenu hmenu;
+	g_helpMenus.GetArray(msize-1, hmenu);
 	switch (g_configLevel) {
 		case 1: {
-			if (strcmp(key, "title", false) == 0)
-				strcopy(hmenu[title], sizeof(hmenu[title]), value);
+			if (strcmp(key, "title", false) == 0) {
+				strcopy(hmenu.title, sizeof(HelpMenu::title), value);
+			}
 			if (strcmp(key, "type", false) == 0) {
 				if (strcmp(value, "text", false) == 0) {
-					hmenu[type] = HelpMenuType_Text;
+					hmenu.type = HelpMenuType_Text;
 				}
 				else {
-					hmenu[type] = HelpMenuType_List;
+					hmenu.type = HelpMenuType_List;
 				}
 			}
 		}
 		case 2: {
-			hmenu[items].WriteString(key);
-			hmenu[items].WriteString(value);
-			hmenu[itemct]++;
+			hmenu.items.WriteString(key);
+			hmenu.items.WriteString(value);
+			++hmenu.itemCount;
 		}
 	}
-	SetArrayArray(g_helpMenus, msize-1, hmenu[0]);
+	g_helpMenus.SetArray(msize-1, hmenu);
 
 	return SMCParse_Continue;
 }
 public SMCResult Config_EndSection(SMCParser parser) {
-	g_configLevel--;
+	--g_configLevel;
+	
 	if (g_configLevel == 1) {
-		int hmenu[HelpMenu];
+		HelpMenu hmenu;
 		int msize = g_helpMenus.Length;
-		GetArrayArray(g_helpMenus, msize-1, hmenu[0]);
-		hmenu[items].Reset();
+		g_helpMenus.GetArray(msize-1, hmenu);
+		hmenu.items.Reset();
 	}
 
 	return SMCParse_Continue;
@@ -200,13 +206,13 @@ void Help_ShowMainMenu(int client) {
 	menu.SetTitle("Help Menu");
 
 	int msize = g_helpMenus.Length;
-	int hmenu[HelpMenu];
+	HelpMenu hmenu;
 	char menuid[10];
 
 	for (int i = 0; i < msize; ++i) {
 		Format(menuid, sizeof(menuid), "helpmenu_%d", i);
-		GetArrayArray(g_helpMenus, i, hmenu[0]);
-		menu.AddItem(menuid, hmenu[name]);
+		g_helpMenus.GetArray(i, hmenu);
+		menu.AddItem(menuid, hmenu.name);
 	}
 
 	if (g_cvarRotation.BoolValue) {
@@ -246,10 +252,9 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 				Menu adminMenu = new Menu(Help_MenuHandler);
 				adminMenu.ExitBackButton = true;
 				adminMenu.SetTitle("Online Admins");
-				int maxc = GetMaxClients();
 				char aname[64];
 
-				for (int i = 1; i < maxc; ++i) {
+				for (int i = 1; i < MaxClients; ++i) {
 					if (Client_IsValidHuman(i, true, false, true) && (GetUserFlagBits(i)) == ADMFLAG_ROOT){
 						GetClientName(i, aname, sizeof(aname));
 						adminMenu.AddItem(aname, aname, ITEMDRAW_DISABLED);
@@ -259,19 +264,20 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 			}
 			else { // Menu from config file
 				if (param2 <= msize) {
-					int hmenu[HelpMenu];
-					GetArrayArray(g_helpMenus, param2, hmenu[0]);
+					HelpMenu hmenu;
+					g_helpMenus.GetArray(param2, hmenu);
 					char mtitle[512];
-					Format(mtitle, sizeof(mtitle), "%s\n ", hmenu[title]);
-					if (hmenu[type] == HelpMenuType_Text) {
-						Panel cpanel = CreatePanel();
+					Format(mtitle, sizeof(mtitle), "%s\n ", hmenu.title);
+					if (hmenu.type == HelpMenuType_Text) {
+						Panel cpanel = new Panel();
 						cpanel.SetTitle(mtitle);
 						char text[128];
 						char junk[128];
 
-						for (int i = 0; i < hmenu[itemct]; ++i) {
-							hmenu[items].ReadString(junk, sizeof(junk));
-							hmenu[items].ReadString(text, sizeof(text));
+						int count = hmenu.itemCount;
+						for (int i = 0; i < count; ++i) {
+							hmenu.items.ReadString(junk, sizeof(junk));
+							hmenu.items.ReadString(text, sizeof(text));
 							cpanel.DrawText(text);
 						}
 						for (int j = 0; j < 7; ++j) {
@@ -283,7 +289,7 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 						cpanel.DrawItem(" ", ITEMDRAW_NOTEXT);
 						cpanel.DrawText(" ");
 						cpanel.DrawItem("Exit", ITEMDRAW_CONTROL);
-						hmenu[items].Reset();
+						hmenu.items.Reset();
 						cpanel.Send(param1, Help_MenuHandler, MENU_TIME_FOREVER);
 						delete cpanel;
 					}
@@ -294,9 +300,10 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 						char cmd[128];
 						char desc[128];
 
-						for (int i = 0; i < hmenu[itemct]; ++i) {
-							hmenu[items].ReadString(cmd, sizeof(cmd));
-							hmenu[items].ReadString(desc, sizeof(desc));
+						int count = hmenu.itemCount;
+						for (int i = 0; i < count; ++i) {
+							hmenu.items.ReadString(cmd, sizeof(cmd));
+							hmenu.items.ReadString(desc, sizeof(desc));
 							int drawstyle = ITEMDRAW_DEFAULT;
 							if (strlen(cmd) == 0) {
 								drawstyle = ITEMDRAW_DISABLED;
@@ -304,7 +311,7 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 							cmenu.AddItem(cmd, desc, drawstyle);
 						}
 
-						hmenu[items].Reset();
+						hmenu.items.Reset();
 						cmenu.Display(param1, MENU_TIME_FOREVER);
 					}
 				}
@@ -352,7 +359,7 @@ int Help_CustomMenuHandler(Menu menu, MenuAction action, int param1, int param2)
 					FakeClientCommand(param1, itemval);
 				}
 				else {
-					Panel panel = CreatePanel();
+					Panel panel = new Panel();
 					panel.SetTitle("Description\n ");
 
 					panel.DrawText(itemval);
