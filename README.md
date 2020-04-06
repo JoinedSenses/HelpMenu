@@ -10,6 +10,8 @@ Configuration is in `configs/helpmenu.cfg`.
 
 The new configuration format removes the old "standard" menus for Rules, Clan Info, and Chat Commands and instead lets you specify arbitrary custom help menus. Each section of the file is its own menu, using the following format:
 
+By default, admins with kick flag appear in the menu. To modify which flag is required for admins to appear in the menu, override `helpmenu_admin`.
+
 ## Code:
 ```
 "Menu Name"
