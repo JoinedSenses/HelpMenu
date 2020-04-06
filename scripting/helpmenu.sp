@@ -95,7 +95,7 @@ public void OnClientPutInServer(int client) {
 
 public Action Timer_WelcomeMessage(Handle timer, int userid) {
 	int client = GetClientOfUserId(userid);
-	if (client && g_cvarWelcome.BoolValue && !IsFakeClient(client)) {
+	if (client && !IsFakeClient(client)) {
 		PrintToChat(client, "\x05[SM] \x01For help, type \x04!helpmenu\x01 in chat");
 	}
 }
