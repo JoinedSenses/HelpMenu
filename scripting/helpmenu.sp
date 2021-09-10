@@ -9,7 +9,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 #include <sourcemod>
-#define PLUGIN_VERSION "0.7"
+#define PLUGIN_VERSION "0.0.8"
 
 enum HelpMenuType {
 	HelpMenuType_List,
@@ -185,7 +185,9 @@ public void Config_End(SMCParser parser, bool halted, bool failed) {
 }
 
 public Action Command_HelpMenu(int client, int args) {
-	Help_ShowMainMenu(client);
+	if (client) {
+		Help_ShowMainMenu(client);
+	}
 	return Plugin_Handled;
 }
 
@@ -197,7 +199,7 @@ public Action Command_HelpMenuReload(int client, int args) {
 	BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
 	ParseConfigFile(hc);
 
-	PrintToChat(client, "\x05[SM] \x01Configuration file has been reloaded");
+	ReplyToCommand(client, "\x05[SM] \x01Configuration file has been reloaded");
 
 	return Plugin_Handled;
 }
