@@ -199,7 +199,7 @@ public Action Command_HelpMenuReload(int client, int args) {
 	BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
 	ParseConfigFile(hc);
 
-	ReplyToCommand(client, "\x05[SM] \x01Configuration file has been reloaded");
+	ReplyToCommand(client, "%sConfiguration file has been reloaded", GetCmdReplySource() == SM_REPLY_TO_CHAT ? "\x05[SM] \x01" : "[SM] ");
 
 	return Plugin_Handled;
 }
