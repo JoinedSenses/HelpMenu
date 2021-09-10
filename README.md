@@ -2,7 +2,7 @@
 Original plugin by chundo. Thread here: https://forums.alliedmods.net/showthread.php?t=72576  
 0.4 edit by emsit
 
-# Help Menu v0.3 (7/10)
+# Help Menu
 
 Displays a help menu to users when they type "!helpmenu" in chat. Help menus can be fully customized via a config file. Also displays two standard help menus: Current Map Rotation, and Online Admins.
 
