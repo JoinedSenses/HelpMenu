@@ -9,7 +9,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 #include <sourcemod>
-#define PLUGIN_VERSION "0.6"
+#define PLUGIN_VERSION "0.7"
 
 enum HelpMenuType {
 	HelpMenuType_List,
@@ -211,7 +211,7 @@ void Help_ShowMainMenu(int client) {
 	char menuid[10];
 
 	for (int i = 0; i < msize; ++i) {
-		Format(menuid, sizeof(menuid), "helpmenu_%d", i);
+		FormatEx(menuid, sizeof(menuid), "helpmenu_%d", i);
 		g_helpMenus.GetArray(i, hmenu);
 		menu.AddItem(menuid, hmenu.name);
 	}
@@ -233,21 +233,25 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 			char buf[64];
 			int msize = g_helpMenus.Length;
 			if (param2 == msize) { // Maps
-				Menu mapMenu = new Menu(Help_MenuHandler);
-				mapMenu.ExitBackButton = true;
 				ReadMapList(g_mapArray, g_mapSerial, "default");
-				Format(buf, sizeof(buf), "Current Rotation (%d maps)\n ", g_helpMenus.Length);
-				mapMenu.SetTitle(buf);
 
 				if (g_mapArray != null) {
-					int mapct = g_helpMenus.Length;
+					Menu mapMenu = new Menu(Help_MenuHandler);
+					mapMenu.ExitBackButton = true;
+					
+					int mapct = g_mapArray.Length;
+
+					FormatEx(buf, sizeof(buf), "Current Rotation (%d maps)\n ", mapct);
+					mapMenu.SetTitle(buf);
+					
 					char mapname[64];
 					for (int i = 0; i < mapct; ++i) {
 						g_mapArray.GetString(i, mapname, sizeof(mapname));
 						mapMenu.AddItem(mapname, mapname, ITEMDRAW_DISABLED);
 					}
+
+					mapMenu.Display(param1, MENU_TIME_FOREVER);
 				}
-				mapMenu.Display(param1, MENU_TIME_FOREVER);
 			}
 			else if (param2 == msize+1) { // Admins
 				Menu adminMenu = new Menu(Help_MenuHandler);
@@ -269,7 +273,7 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 					HelpMenu hmenu;
 					g_helpMenus.GetArray(param2, hmenu);
 					char mtitle[512];
-					Format(mtitle, sizeof(mtitle), "%s\n ", hmenu.title);
+					FormatEx(mtitle, sizeof(mtitle), "%s\n ", hmenu.title);
 					if (hmenu.type == HelpMenuType_Text) {
 						Panel cpanel = new Panel();
 						cpanel.SetTitle(mtitle);
