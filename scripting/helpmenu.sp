@@ -9,7 +9,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 #include <sourcemod>
-#define PLUGIN_VERSION "0.0.8"
+#define PLUGIN_VERSION "0.0.9"
 
 enum HelpMenuType {
 	HelpMenuType_List,
@@ -25,12 +25,11 @@ enum struct HelpMenu {
 }
 
 // CVars
-ConVar
-	  g_cvarWelcome
-	, g_cvarAdmins
-	, g_cvarRotation
-	, g_cvarReload
-	, g_cvarConfigPath;
+ConVar g_cvarWelcome;
+ConVar g_cvarAdmins;
+ConVar g_cvarRotation;
+ConVar g_cvarReload;
+ConVar g_cvarConfigPath;
 
 // Help menus
 ArrayList g_helpMenus;
@@ -65,10 +64,10 @@ public void OnPluginStart() {
 	g_mapArray = new ArrayList(ByteCountToCells(80));
 	g_helpMenus = new ArrayList(sizeof(HelpMenu));
 
-	char hc[PLATFORM_MAX_PATH];
 	char buffer[PLATFORM_MAX_PATH];
-
 	g_cvarConfigPath.GetString(buffer, sizeof(buffer));
+
+	char hc[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
 	ParseConfigFile(hc);
 
@@ -78,10 +77,10 @@ public void OnPluginStart() {
 
 public void OnMapStart() {
 	if (g_cvarReload.BoolValue) {
-		char hc[PLATFORM_MAX_PATH];
 		char buffer[PLATFORM_MAX_PATH];
-
 		g_cvarConfigPath.GetString(buffer, sizeof(buffer));
+
+		char hc[PLATFORM_MAX_PATH];
 		BuildPath(Path_SM, hc, sizeof(hc), "%s", buffer);
 		ParseConfigFile(hc);
 	}
@@ -112,12 +111,15 @@ bool ParseConfigFile(const char[] file) {
 	int line = 0;
 	int col = 0;
 	char error[128];
+
 	SMCError result = parser.ParseFile(file, line, col);
 	if (result != SMCError_Okay) {
 		parser.GetErrorString(result, error, sizeof(error));
 		LogError("%s on line %d, col %d of %s", error, line, col, file);
 	}
+
 	delete parser;
+
 	return (result == SMCError_Okay);
 }
 
@@ -128,6 +130,7 @@ public SMCResult Config_NewSection(SMCParser parser, const char[] section, bool 
 		strcopy(hmenu.name, sizeof(HelpMenu::name), section);
 		hmenu.items = new DataPack();
 		hmenu.itemCount = 0;
+
 		if (g_helpMenus == null) {
 			g_helpMenus = new ArrayList(sizeof(HelpMenu));
 		}
@@ -139,8 +142,10 @@ public SMCResult Config_NewSection(SMCParser parser, const char[] section, bool 
 
 public SMCResult Config_KeyValue(SMCParser parser, const char[] key, const char[] value, bool key_quotes, bool value_quotes) {
 	int msize = g_helpMenus.Length;
+
 	HelpMenu hmenu;
 	g_helpMenus.GetArray(msize-1, hmenu);
+
 	switch (g_configLevel) {
 		case 1: {
 			if (strcmp(key, "title", false) == 0) {
@@ -161,6 +166,7 @@ public SMCResult Config_KeyValue(SMCParser parser, const char[] key, const char[
 			++hmenu.itemCount;
 		}
 	}
+
 	g_helpMenus.SetArray(msize-1, hmenu);
 
 	return SMCParse_Continue;
@@ -188,6 +194,7 @@ public Action Command_HelpMenu(int client, int args) {
 	if (client) {
 		Help_ShowMainMenu(client);
 	}
+
 	return Plugin_Handled;
 }
 
@@ -210,7 +217,7 @@ void Help_ShowMainMenu(int client) {
 
 	int msize = g_helpMenus.Length;
 	HelpMenu hmenu;
-	char menuid[10];
+	char menuid[16];
 
 	for (int i = 0; i < msize; ++i) {
 		FormatEx(menuid, sizeof(menuid), "helpmenu_%d", i);
@@ -229,7 +236,7 @@ void Help_ShowMainMenu(int client) {
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
-int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
+int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2){
 	switch(action) {
 		case MenuAction_Select: {
 			char buf[64];
@@ -268,6 +275,7 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 						adminMenu.AddItem(aname, aname, ITEMDRAW_DISABLED);
 					}
 				}
+
 				adminMenu.Display(param1, MENU_TIME_FOREVER);
 			}
 			else { // Menu from config file
@@ -288,6 +296,7 @@ int Help_MainMenuHandler(Menu menu, MenuAction action, int param1, int param2) {
 							hmenu.items.ReadString(text, sizeof(text));
 							cpanel.DrawText(text);
 						}
+
 						for (int j = 0; j < 7; ++j) {
 							cpanel.DrawItem(" ", ITEMDRAW_NOTEXT);
 						}
